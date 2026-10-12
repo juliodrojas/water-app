@@ -653,8 +653,9 @@
           <circle cx="12" cy="19" r="0.75" fill="currentColor"/>
         </svg>
         <h3 class="empty-title">No Usage Logged Yet</h3>
-        <p class="empty-desc">Record your first monthly bill to unlock comparative analytics, benchmarks, and trends.</p>
+        <p class="empty-desc">Add your first water bill and the app will chart your usage, compare it to the average home, and suggest ways to save. Or explore instantly with demo data.</p>
         <button type="button" class="btn btn-primary" id="btn-empty-log-jump">Log Your First Bill</button>
+        <button type="button" class="btn btn-secondary" id="btn-try-demo" style="margin-top: 8px;">Try It with Demo Data</button>
       </div>
 
       <!-- Dashboard Populated Content -->
@@ -708,17 +709,17 @@
     <section id="tab-log" class="tab-content">
       <div class="card">
         <h2 class="card-title">Log Water Bill</h2>
-        <p class="card-subtitle">Manually record water volume or reference your bill invoice.</p>
+        <p class="card-subtitle">Type in the numbers from your water bill.</p>
 
         <!-- Bill Photo Attachment Section -->
         <div class="callout callout-info">
           <div>
-            <strong>Manual Transcription (Beta):</strong> Attach a bill photo for convenient visual reference. Automatic optical recognition is disabled in this beta version.
+            <strong>Beta tip:</strong> snap a photo of your bill so you can read the numbers off it while you type. The app can't read the photo by itself yet.
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="bill-photo-input">Attach Bill Photo (Reference Only)</label>
+          <label class="form-label" for="bill-photo-input">Bill photo (just for reference)</label>
           <input type="file" id="bill-photo-input" class="form-input" accept="image/*">
         </div>
 
@@ -761,7 +762,10 @@
       <div class="card">
         <div class="card-title">
           <span>Logged Records</span>
-          <button type="button" class="btn btn-secondary" id="btn-export-csv" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Export CSV</button>
+          <span>
+            <button type="button" class="btn btn-outline" id="btn-clear-demo" style="width: auto; padding: 6px 12px; font-size: 0.8rem; margin-right: 6px; display: none;">Clear demo data</button>
+            <button type="button" class="btn btn-secondary" id="btn-export-csv" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Export CSV</button>
+          </span>
         </div>
         <div class="table-container">
           <table class="data-table" id="usage-history-table">
@@ -810,10 +814,10 @@
       <!-- Rule-Engine Recommendations -->
       <div class="card">
         <div class="card-title">
-          <span>Tailored Conservation Plan</span>
-          <span class="badge badge-demo">Analyzed</span>
+          <span>Ways to Save Water</span>
+          <span class="badge badge-demo">For you</span>
         </div>
-        <p class="card-subtitle">Automated upgrades generated from current consumption triggers.</p>
+        <p class="card-subtitle">Suggestions based on your actual usage.</p>
         <div id="recommendations-container">
           <!-- Dynamically populated -->
         </div>
@@ -857,7 +861,7 @@
 
       <!-- General Conservation Tips Accordion -->
       <div class="card">
-        <h2 class="card-title">Water Conservation Library</h2>
+        <h2 class="card-title">Water-Saving Tips</h2>
         <div id="tips-accordion">
           <div class="accordion-item">
             <button type="button" class="accordion-trigger" data-tip="1">
@@ -895,18 +899,18 @@
       <!-- Device Pairing & Simulator Card -->
       <div class="card">
         <div class="card-title">
-          <span>Sensor Connection</span>
+          <span>Connect a Device</span>
           <span class="badge badge-demo">Demo Mode</span>
         </div>
-        <p class="card-subtitle">Simulate real-time hardware telemetrics or submit manual strip readings.</p>
+        <p class="card-subtitle">Simulate a connected device, or type in test-strip readings by hand.</p>
 
         <div class="callout callout-warning">
           <div>
-            <strong>Hardware Interface Simulation:</strong> Simulated sensor stream active. You may auto-generate sensor readings or manually enter parameters.
+            <strong>Demo device:</strong> the readings below are simulated. You can also type in your own numbers.
           </div>
         </div>
 
-        <button type="button" class="btn btn-secondary" id="btn-simulate-readings" style="margin-bottom: 12px;">Simulate Sensor Reading</button>
+        <button type="button" class="btn btn-secondary" id="btn-simulate-readings" style="margin-bottom: 12px;">Simulate a Reading</button>
 
         <form id="quality-input-form">
           <div class="form-group">
@@ -925,13 +929,13 @@
             <label class="form-label" for="metric-hardness">Hardness (mg/L CaCO3)</label>
             <input type="number" step="1" id="metric-hardness" class="form-input" placeholder="e.g. 140 (Hard)">
           </div>
-          <button type="submit" class="btn btn-primary" id="btn-evaluate-quality">Evaluate Parameters</button>
+          <button type="submit" class="btn btn-primary" id="btn-evaluate-quality">Check My Water</button>
         </form>
       </div>
 
       <!-- Water Quality Report -->
       <div class="card">
-        <h2 class="card-title">Diagnostic Results vs EPA Standards</h2>
+        <h2 class="card-title">Your Results vs EPA Standards</h2>
         <div id="quality-results-list">
           <div class="metric-row">
             <div>
@@ -966,9 +970,9 @@
 
       <!-- Actionable Fixes & Product Recommendations -->
       <div class="card" id="card-quality-remediation">
-        <h2 class="card-title">Remediation &amp; Equipment Advice</h2>
+        <h2 class="card-title">How to Fix It</h2>
         <div id="quality-remediation-container">
-          <p class="empty-desc" style="margin: 0;">Submit or simulate water parameters above to verify remediation suggestions.</p>
+          <p class="empty-desc" style="margin: 0;">Enter your numbers above (or simulate a reading) to get fix-it suggestions.</p>
         </div>
       </div>
     </section>
@@ -1117,6 +1121,56 @@
       if (entryMonthInput) entryMonthInput.focus();
     });
   }
+
+  // --- Demo Data Mode (one-tap sample dataset for exploration & presentations) ---
+  const btnTryDemo = document.getElementById("btn-try-demo");
+  const btnClearDemo = document.getElementById("btn-clear-demo");
+  const QUALITY_KEY = "waterapp.quality.v1"; // mirrors the quality script's STORAGE_KEY_QUALITY
+
+  function hasDemoData() {
+    return bills.some(b => String(b.id).indexOf("demo_") === 0);
+  }
+
+  function seedDemoData() {
+    const demoBills = [
+      { id: "demo_2026_05", month: "2026-05", gallons: 4200, cost: 48.20 },
+      { id: "demo_2026_06", month: "2026-06", gallons: 5100, cost: 55.80 },
+      { id: "demo_2026_07", month: "2026-07", gallons: 6300, cost: 66.40 },
+      { id: "demo_2026_08", month: "2026-08", gallons: 5900, cost: 62.10 },
+      { id: "demo_2026_09", month: "2026-09", gallons: 4800, cost: 53.30 },
+      { id: "demo_2026_10", month: "2026-10", gallons: 3900, cost: 45.90 }
+    ];
+    demoBills.forEach(b => {
+      if (!bills.find(x => x.month === b.month)) {
+        bills.push({ id: b.id, month: b.month, gallons: b.gallons, cost: b.cost });
+      }
+    });
+    bills.sort((a, b) => a.month.localeCompare(b.month));
+    saveBills();
+    try { localStorage.setItem(STORAGE_KEY_GOAL, "4500"); } catch (e) {}
+    try {
+      localStorage.setItem(QUALITY_KEY, JSON.stringify({
+        tds: 580, ph: 7.2, chlorine: 1.5, hardness: 210,
+        isDemo: true, timestamp: Date.now()
+      }));
+    } catch (e) {}
+    renderAll();
+    if (typeof window.updateQualityUI === "function") window.updateQualityUI();
+    setActiveTab("tab-dashboard");
+  }
+
+  function clearDemoData() {
+    if (!hasDemoData()) return;
+    if (!confirm("Remove the demo data and start fresh? Your own entries stay untouched.")) return;
+    bills = bills.filter(b => String(b.id).indexOf("demo_") !== 0);
+    saveBills();
+    try { localStorage.removeItem(QUALITY_KEY); } catch (e) {}
+    renderAll();
+    if (typeof window.updateQualityUI === "function") window.updateQualityUI();
+  }
+
+  if (btnTryDemo) btnTryDemo.addEventListener("click", seedDemoData);
+  if (btnClearDemo) btnClearDemo.addEventListener("click", clearDemoData);
 
   // --- Persistence Helpers ---
   function loadBills() {
@@ -1543,7 +1597,7 @@
       if (momSpike > 25) {
         rulesTriggered.push({
           title: `Unusual Usage Surge (+${momSpike.toFixed(0)}%) Detected`,
-          rationale: "Usage jumped significantly above your prior billing cycle. A silent flapper leak or irrigation valve failure is probable.",
+          rationale: "Your usage jumped a lot since last month. A running toilet or a stuck sprinkler valve is the usual suspect — run the leak checklist below.",
           product: PRODUCT_CARDS.leakDetector
         });
       }
@@ -1553,7 +1607,7 @@
     if (latestDailyAvg > BENCHMARK_GAL_DAY) {
       rulesTriggered.push({
         title: "High Flow Baseline (Exceeds 82 gal/day Benchmark)",
-        rationale: "Your daily volume exceeds the baseline for standard high-efficiency households. Retrofitting fixtures yields immediate payback.",
+        rationale: "You're using more than the 82 gal/day benchmark. Swapping in efficient fixtures pays for itself fast.",
         product: PRODUCT_CARDS.showerhead
       });
       rulesTriggered.push({
@@ -1563,7 +1617,7 @@
       });
       rulesTriggered.push({
         title: "Sink Flow Reduction",
-        rationale: "Low-cost aerators restrict standard bathroom and kitchen faucets to under 1.5 GPM without noticeable pressure degradation.",
+        rationale: "Cheap screw-on aerators cut faucet flow without you noticing a difference.",
         product: PRODUCT_CARDS.aerator
       });
     }
@@ -1572,7 +1626,7 @@
     if (isSummerMonth) {
       rulesTriggered.push({
         title: "Seasonal Irrigation Optimization",
-        rationale: "Warm-weather cycles routinely consume up to 50% of summer water. Weather-based controllers avoid unnecessary watering during rainfall.",
+        rationale: "Summer watering can be half your water use. A weather-based controller skips watering when rain is coming.",
         product: PRODUCT_CARDS.sprinkler
       });
     }
@@ -1581,7 +1635,7 @@
     if (rulesTriggered.length === 0) {
       rulesTriggered.push({
         title: "Continuous Efficiency Safeguard",
-        rationale: "Your baseline is efficient. Deploying proactive leak monitors protects against hidden plumbing leaks.",
+        rationale: "Your usage looks efficient. A leak sensor is cheap insurance against hidden leaks.",
         product: PRODUCT_CARDS.leakDetector
       });
     }
@@ -1661,6 +1715,8 @@
 
   // --- Master Render Function ---
   function renderAll() {
+    const clearBtn = document.getElementById("btn-clear-demo");
+    if (clearBtn) clearBtn.style.display = hasDemoData() ? "" : "none";
     renderTable();
     renderDashboard();
     renderGoalRing();
@@ -1841,7 +1897,7 @@
 
       if (remediationContainer) {
         remediationContainer.innerHTML = `
-          <p class="empty-desc" style="margin: 0;">Submit or simulate water parameters above to verify remediation suggestions.</p>
+          <p class="empty-desc" style="margin: 0;">Enter your numbers above (or simulate a reading) to get fix-it suggestions.</p>
         `;
       }
       return;
@@ -1889,7 +1945,7 @@
       remediationContainer.innerHTML = `
         <div class="callout callout-success" style="margin: 0;">
           <div>
-            <strong>Water Quality Optimal:</strong> All tested parameters conform to EPA drinking water standards and aesthetic thresholds.${data.isDemo ? " (Evaluated from Demo sensor data)." : ""}
+            <strong>Looking good:</strong> all four readings are within EPA guidelines.${data.isDemo ? " (Evaluated from Demo sensor data)." : ""}
           </div>
         </div>
       `;
