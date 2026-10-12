@@ -625,6 +625,132 @@
     .nav-btn.active svg {
       stroke: var(--primary);
     }
+
+    /* Onboarding overlay */
+    .onboard-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .onboard-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .onboard-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .onboard-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* Settings gear + panel */
+    .gear-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+      border-radius: 9999px;
+      width: 36px;
+      height: 36px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .settings-panel {
+      position: fixed;
+      top: 64px;
+      right: 12px;
+      z-index: 60;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      border: 1px solid #e2e8f0;
+      padding: 14px;
+      width: 240px;
+      display: none;
+    }
+
+    .settings-panel.open {
+      display: block;
+    }
+
+    .settings-panel .form-group {
+      margin-bottom: 10px;
+    }
+
+    /* Verdict banner */
+    .verdict {
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .verdict-good {
+      background: var(--success-light);
+      color: #065f46;
+    }
+
+    .verdict-bad {
+      background: var(--danger-light);
+      color: #991b1b;
+    }
+
+    details.metric-details {
+      margin-top: 4px;
+    }
+
+    details.metric-details summary {
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      padding: 8px 0;
+    }
+
+    /* Action-first recommendation cards */
+    .action-link {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .tip-block {
+      background: var(--surface-subtle);
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+    }
+
+    .tip-block strong {
+      display: block;
+      margin-bottom: 2px;
+    }
   </style>
 </head>
 <body>
@@ -638,7 +764,33 @@
       <span class="brand-title">Water App</span>
       <span class="badge-beta">Beta</span>
     </div>
+    <button type="button" class="gear-btn" id="btn-settings" aria-label="Settings">&#9881;</button>
   </header>
+
+  <!-- Settings panel -->
+  <div class="settings-panel" id="settings-panel">
+    <div class="form-group">
+      <label class="form-label" for="input-household">People in your home</label>
+      <input type="number" id="input-household" class="form-input" min="1" max="20" step="1">
+    </div>
+    <button type="button" class="btn btn-secondary" id="btn-save-household" style="margin-bottom: 8px; padding: 8px;">Save</button>
+    <button type="button" class="btn btn-outline" id="btn-export-csv" style="margin-bottom: 8px; padding: 8px; font-size: 0.85rem;">Export usage (CSV)</button>
+    <button type="button" class="btn btn-outline" id="btn-clear-demo" style="padding: 8px; font-size: 0.85rem; display: none;">Clear demo data</button>
+  </div>
+
+  <!-- Onboarding overlay -->
+  <div class="onboard-overlay" id="onboard-overlay" style="display: none;">
+    <div class="onboard-card">
+      <h2>Welcome to Water App</h2>
+      <p>One quick question so your stats make sense. You can change this later in settings.</p>
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label" for="input-onboard-household">How many people live in your home?</label>
+        <input type="number" id="input-onboard-household" class="form-input" min="1" max="20" step="1" placeholder="e.g. 3">
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-onboard-save">Get Started</button>
+      <button type="button" class="btn btn-outline" id="btn-onboard-skip" style="margin-top: 8px;">Skip for now</button>
+    </div>
+  </div>
 
   <!-- Main View Container -->
   <main class="app-container">
@@ -670,7 +822,7 @@
             <div class="stat-card">
               <span class="stat-label">Daily Avg</span>
               <span class="stat-value" id="dash-daily-avg">0 <small style="font-size:0.7rem">gal</small></span>
-              <span class="stat-sub">per household</span>
+              <span class="stat-sub" id="dash-daily-sub">per person</span>
             </div>
             <div class="stat-card">
               <span class="stat-label">Est. Cost</span>
@@ -685,7 +837,7 @@
             <div class="stat-card">
               <span class="stat-label">US Benchmark</span>
               <span class="stat-value">82 <small style="font-size:0.7rem">gal/d</small></span>
-              <span class="stat-sub">per person benchmark</span>
+              <span class="stat-sub" id="dash-benchmark-sub">per person, per day</span>
             </div>
           </div>
         </div>
@@ -711,22 +863,6 @@
         <h2 class="card-title">Log Water Bill</h2>
         <p class="card-subtitle">Type in the numbers from your water bill.</p>
 
-        <!-- Bill Photo Attachment Section -->
-        <div class="callout callout-info">
-          <div>
-            <strong>Beta tip:</strong> snap a photo of your bill so you can read the numbers off it while you type. The app can't read the photo by itself yet.
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="bill-photo-input">Bill photo (just for reference)</label>
-          <input type="file" id="bill-photo-input" class="form-input" accept="image/*">
-        </div>
-
-        <div id="photo-preview-wrapper" style="display: none; margin-bottom: 14px;">
-          <img id="bill-photo-preview" src="" alt="Bill Preview" style="width: 100%; max-height: 180px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-        </div>
-
         <form id="usage-log-form">
           <input type="hidden" id="entry-id" value="">
 
@@ -739,7 +875,7 @@
             <label class="form-label">Unit of Measure</label>
             <div class="segmented-control">
               <button type="button" class="segmented-btn active" id="btn-unit-gal" data-unit="gal">Gallons</button>
-              <button type="button" class="segmented-btn" id="btn-unit-ccf" data-unit="ccf">CCF (748 gal)</button>
+              <button type="button" class="segmented-btn" id="btn-unit-ccf" data-unit="ccf">My bill shows CCF</button>
             </div>
           </div>
 
@@ -762,10 +898,6 @@
       <div class="card">
         <div class="card-title">
           <span>Logged Records</span>
-          <span>
-            <button type="button" class="btn btn-outline" id="btn-clear-demo" style="width: auto; padding: 6px 12px; font-size: 0.8rem; margin-right: 6px; display: none;">Clear demo data</button>
-            <button type="button" class="btn btn-secondary" id="btn-export-csv" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Export CSV</button>
-          </span>
         </div>
         <div class="table-container">
           <table class="data-table" id="usage-history-table">
@@ -825,8 +957,8 @@
 
       <!-- Leak Detection Checklist -->
       <div class="card">
-        <h2 class="card-title">Household Leak Checklist</h2>
-        <p class="card-subtitle">Inspect your primary high-consumption fixtures systematically.</p>
+        <h2 class="card-title">Home Water Checkup</h2>
+        <p class="card-subtitle">Work through the checks below — quick inspections first, then easy wins.</p>
         <ul class="checklist" id="leak-checklist">
           <li class="checklist-item">
             <input type="checkbox" id="chk-toilet">
@@ -857,39 +989,17 @@
             </div>
           </li>
         </ul>
-      </div>
-
-      <!-- General Conservation Tips Accordion -->
-      <div class="card">
-        <h2 class="card-title">Water-Saving Tips</h2>
-        <div id="tips-accordion">
-          <div class="accordion-item">
-            <button type="button" class="accordion-trigger" data-tip="1">
-              <span>Optimizing Bathroom Fixtures</span>
-              <span>+</span>
-            </button>
-            <div class="accordion-content" id="tip-content-1">
-              Standard showerheads consume up to 2.5 gpm. Upgrading to a certified 1.5 gpm aerating head saves roughly 2,900 gallons per household annually without sacrificing pressure.
-            </div>
-          </div>
-          <div class="accordion-item">
-            <button type="button" class="accordion-trigger" data-tip="2">
-              <span>Irrigation Cycle Scheduling</span>
-              <span>+</span>
-            </button>
-            <div class="accordion-content" id="tip-content-2">
-              Run cycles strictly before 9:00 AM or after 7:00 PM to mitigate midday evaporation loss. Utilize cycle-and-soak run times on compacted slopes to stop runoff.
-            </div>
-          </div>
-          <div class="accordion-item">
-            <button type="button" class="accordion-trigger" data-tip="3">
-              <span>Full-Load Kitchen & Laundry Practices</span>
-              <span>+</span>
-            </button>
-            <div class="accordion-content" id="tip-content-3">
-              Washing dishes by hand generally expends 20 gallons compared to modern Energy Star dishwashers consuming under 4 gallons per complete cycle.
-            </div>
-          </div>
+        <div class="tip-block">
+          <strong>Showerheads</strong>
+          Standard heads use up to 2.5 gallons per minute. A 1.5 gpm WaterSense head saves roughly 2,900 gallons a year per home without weaker pressure.
+        </div>
+        <div class="tip-block">
+          <strong>Watering schedule</strong>
+          Water before 9 AM or after 7 PM so less evaporates. On slopes, run short cycles with breaks so water soaks in instead of running off.
+        </div>
+        <div class="tip-block">
+          <strong>Kitchen &amp; laundry</strong>
+          Run full loads only. A modern dishwasher uses under 4 gallons per cycle — far less than washing by hand.
         </div>
       </div>
     </section>
@@ -899,18 +1009,11 @@
       <!-- Device Pairing & Simulator Card -->
       <div class="card">
         <div class="card-title">
-          <span>Connect a Device</span>
-          <span class="badge badge-demo">Demo Mode</span>
+          <span>Water Test Strips</span>
         </div>
-        <p class="card-subtitle">Simulate a connected device, or type in test-strip readings by hand.</p>
+        <p class="card-subtitle">Dip a test strip in your tap water, then type the four numbers below.</p>
 
-        <div class="callout callout-warning">
-          <div>
-            <strong>Demo device:</strong> the readings below are simulated. You can also type in your own numbers.
-          </div>
-        </div>
-
-        <button type="button" class="btn btn-secondary" id="btn-simulate-readings" style="margin-bottom: 12px;">Simulate a Reading</button>
+        <button type="button" class="btn btn-secondary" id="btn-simulate-readings" style="margin-bottom: 12px;">Fill In Sample Numbers</button>
 
         <form id="quality-input-form">
           <div class="form-group">
@@ -936,7 +1039,10 @@
       <!-- Water Quality Report -->
       <div class="card">
         <h2 class="card-title">Your Results vs EPA Standards</h2>
-        <div id="quality-results-list">
+        <div id="quality-verdict" style="display: none;"></div>
+        <details class="metric-details">
+          <summary>See the numbers</summary>
+          <div id="quality-results-list">
           <div class="metric-row">
             <div>
               <div class="metric-label">TDS (Total Dissolved Solids)</div>
@@ -965,7 +1071,8 @@
             </div>
             <div class="metric-status" id="status-hardness"><span class="badge badge-neutral">Pending</span></div>
           </div>
-        </div>
+          </div>
+        </details>
       </div>
 
       <!-- Actionable Fixes & Product Recommendations -->
@@ -1003,7 +1110,7 @@
       <svg viewBox="0 0 24 24">
         <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
       </svg>
-      <span>Quality</span>
+      <span>Water Test</span>
     </button>
   </nav>
 
@@ -1081,9 +1188,6 @@
   const btnUnitCcf = document.getElementById("btn-unit-ccf");
   const btnSaveEntry = document.getElementById("btn-save-entry");
   const btnCancelEdit = document.getElementById("btn-cancel-edit");
-  const billPhotoInput = document.getElementById("bill-photo-input");
-  const photoPreviewWrapper = document.getElementById("photo-preview-wrapper");
-  const billPhotoPreview = document.getElementById("bill-photo-preview");
 
   // Log Table & Export
   const usageTableBody = document.getElementById("usage-table-body");
@@ -1096,7 +1200,6 @@
   const goalProgressCircle = document.getElementById("goal-progress-circle");
   const goalProgressPercent = document.getElementById("goal-progress-percent");
   const recommendationsContainer = document.getElementById("recommendations-container");
-  const tipsAccordion = document.getElementById("tips-accordion");
 
   // --- Tab Navigation Router ---
   function setActiveTab(targetTabId) {
@@ -1217,24 +1320,6 @@
   if (btnUnitGal) btnUnitGal.addEventListener("click", () => setUnit("gal"));
   if (btnUnitCcf) btnUnitCcf.addEventListener("click", () => setUnit("ccf"));
 
-  // --- Photo Attachment Preview ---
-  if (billPhotoInput) {
-    billPhotoInput.addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (billPhotoPreview) billPhotoPreview.src = event.target.result;
-          if (photoPreviewWrapper) photoPreviewWrapper.style.display = "block";
-        };
-        reader.readAsDataURL(file);
-      } else {
-        if (billPhotoPreview) billPhotoPreview.src = "";
-        if (photoPreviewWrapper) photoPreviewWrapper.style.display = "none";
-      }
-    });
-  }
-
   // --- Log Form Management & Table ---
   function resetForm() {
     if (entryIdInput) entryIdInput.value = "";
@@ -1242,9 +1327,7 @@
     setUnit("gal");
     if (btnSaveEntry) btnSaveEntry.textContent = "Save Billing Record";
     if (btnCancelEdit) btnCancelEdit.style.display = "none";
-    if (billPhotoInput) billPhotoInput.value = "";
-    if (billPhotoPreview) billPhotoPreview.src = "";
-    if (photoPreviewWrapper) photoPreviewWrapper.style.display = "none";
+    defaultBillingMonth();
   }
 
   if (btnCancelEdit) btnCancelEdit.addEventListener("click", resetForm);
@@ -1464,10 +1547,22 @@
     const latest = bills[bills.length - 1];
     const prev = bills.length >= 2 ? bills[bills.length - 2] : null;
 
-    // Daily average based on standard 30.4 days
+    // Daily average based on standard 30.4 days, shown per person
     const latestDailyAvg = Math.round(latest.gallons / DAYS_PER_MONTH);
+    const householdSize = getHouseholdSize() || 1;
+    const perPersonDaily = Math.round(latestDailyAvg / householdSize);
     if (dashDailyAvg) {
-      dashDailyAvg.innerHTML = `${latestDailyAvg.toLocaleString()} <small style="font-size:0.7rem">gal</small>`;
+      dashDailyAvg.innerHTML = `${perPersonDaily.toLocaleString()} <small style="font-size:0.7rem">gal</small>`;
+    }
+    const dashDailySub = document.getElementById("dash-daily-sub");
+    if (dashDailySub) {
+      dashDailySub.textContent = householdSize > 1 ? `per person · ${householdSize} in home` : "per person";
+    }
+    const dashBenchmarkSub = document.getElementById("dash-benchmark-sub");
+    if (dashBenchmarkSub) {
+      dashBenchmarkSub.textContent = perPersonDaily <= BENCHMARK_GAL_DAY
+        ? `you: ${perPersonDaily} — under the 82 benchmark`
+        : `you: ${perPersonDaily} — over the 82 benchmark`;
     }
 
     // Cost from latest billing record
@@ -1597,6 +1692,7 @@
       if (momSpike > 25) {
         rulesTriggered.push({
           title: `Unusual Usage Surge (+${momSpike.toFixed(0)}%) Detected`,
+          action: "Check for leaks today",
           rationale: "Your usage jumped a lot since last month. A running toilet or a stuck sprinkler valve is the usual suspect — run the leak checklist below.",
           product: PRODUCT_CARDS.leakDetector
         });
@@ -1607,16 +1703,19 @@
     if (latestDailyAvg > BENCHMARK_GAL_DAY) {
       rulesTriggered.push({
         title: "High Flow Baseline (Exceeds 82 gal/day Benchmark)",
+        action: "Switch to a low-flow showerhead",
         rationale: "You're using more than the 82 gal/day benchmark. Swapping in efficient fixtures pays for itself fast.",
         product: PRODUCT_CARDS.showerhead
       });
       rulesTriggered.push({
         title: "Toilet Flow Modernization",
+        action: "Upgrade to a dual-flush toilet",
         rationale: "Toilets represent the single largest indoor water consumer. A dual-flush converter eliminates excess volume on liquid flushes.",
         product: PRODUCT_CARDS.dualFlush
       });
       rulesTriggered.push({
         title: "Sink Flow Reduction",
+        action: "Add aerators to your faucets",
         rationale: "Cheap screw-on aerators cut faucet flow without you noticing a difference.",
         product: PRODUCT_CARDS.aerator
       });
@@ -1626,6 +1725,7 @@
     if (isSummerMonth) {
       rulesTriggered.push({
         title: "Seasonal Irrigation Optimization",
+        action: "Put your sprinklers on a weather schedule",
         rationale: "Summer watering can be half your water use. A weather-based controller skips watering when rain is coming.",
         product: PRODUCT_CARDS.sprinkler
       });
@@ -1635,6 +1735,7 @@
     if (rulesTriggered.length === 0) {
       rulesTriggered.push({
         title: "Continuous Efficiency Safeguard",
+        action: "Add a leak sensor for peace of mind",
         rationale: "Your usage looks efficient. A leak sensor is cheap insurance against hidden leaks.",
         product: PRODUCT_CARDS.leakDetector
       });
@@ -1645,41 +1746,15 @@
       card.className = "product-card";
       card.innerHTML = `
         <div class="product-header">
-          <span class="product-name">${rec.title}</span>
+          <span class="product-name">${rec.action}</span>
           <span class="product-savings">${rec.product.savings}</span>
         </div>
         <p class="product-desc">${rec.rationale}</p>
-        <div style="font-weight:600; font-size:0.85rem; color:var(--text); margin-top:4px;">
-          Recommended: ${rec.product.name}
-        </div>
-        <p class="product-desc">${rec.product.desc}</p>
-        <a href="${rec.product.url}" target="_blank" rel="noopener noreferrer" class="product-btn">
-          View Products Online &rarr;
+        <a href="${rec.product.url}" target="_blank" rel="noopener noreferrer" class="action-link">
+          Shop: ${rec.product.name} &rarr;
         </a>
       `;
       recommendationsContainer.appendChild(card);
-    });
-  }
-
-  // --- Conservation Tips Accordion ---
-  if (tipsAccordion) {
-    const triggers = tipsAccordion.querySelectorAll(".accordion-trigger");
-    triggers.forEach(trigger => {
-      trigger.addEventListener("click", () => {
-        const item = trigger.closest(".accordion-item");
-        const content = item.querySelector(".accordion-content");
-        const sign = trigger.querySelector("span:last-child");
-        const isOpen = content.classList.contains("open");
-
-        // Close all siblings
-        tipsAccordion.querySelectorAll(".accordion-content").forEach(c => c.classList.remove("open"));
-        tipsAccordion.querySelectorAll(".accordion-trigger span:last-child").forEach(s => s.textContent = "+");
-
-        if (!isOpen) {
-          content.classList.add("open");
-          if (sign) sign.textContent = "−";
-        }
-      });
     });
   }
 
@@ -1723,9 +1798,76 @@
     renderRecommendations();
   }
 
+  // --- Household Size, Onboarding & Settings ---
+  const STORAGE_KEY_HOUSEHOLD = "waterapp.household.v1";
+  const btnSettings = document.getElementById("btn-settings");
+  const settingsPanel = document.getElementById("settings-panel");
+  const onboardOverlay = document.getElementById("onboard-overlay");
+
+  function getHouseholdSize() {
+    const v = parseInt(localStorage.getItem(STORAGE_KEY_HOUSEHOLD), 10);
+    return v > 0 ? v : null;
+  }
+
+  function setHouseholdSize(n) {
+    localStorage.setItem(STORAGE_KEY_HOUSEHOLD, String(n));
+    renderDashboard();
+  }
+
+  function defaultBillingMonth() {
+    if (entryMonthInput && !entryMonthInput.value) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      entryMonthInput.value = d.toISOString().slice(0, 7);
+    }
+  }
+
+  if (btnSettings && settingsPanel) {
+    btnSettings.addEventListener("click", (e) => {
+      e.stopPropagation();
+      settingsPanel.classList.toggle("open");
+      if (settingsPanel.classList.contains("open")) {
+        const inp = document.getElementById("input-household");
+        const s = getHouseholdSize();
+        if (inp && s) inp.value = s;
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (!settingsPanel.contains(e.target)) settingsPanel.classList.remove("open");
+    });
+  }
+
+  const btnSaveHousehold = document.getElementById("btn-save-household");
+  if (btnSaveHousehold) {
+    btnSaveHousehold.addEventListener("click", () => {
+      const v = parseInt(document.getElementById("input-household").value, 10);
+      if (!(v > 0)) { alert("Please enter a valid number of people."); return; }
+      setHouseholdSize(v);
+      if (settingsPanel) settingsPanel.classList.remove("open");
+    });
+  }
+
+  const btnOnboardSave = document.getElementById("btn-onboard-save");
+  if (btnOnboardSave) {
+    btnOnboardSave.addEventListener("click", () => {
+      const v = parseInt(document.getElementById("input-onboard-household").value, 10);
+      if (!(v > 0)) { alert("Please enter how many people live in your home."); return; }
+      setHouseholdSize(v);
+      if (onboardOverlay) onboardOverlay.style.display = "none";
+    });
+  }
+  const btnOnboardSkip = document.getElementById("btn-onboard-skip");
+  if (btnOnboardSkip) {
+    btnOnboardSkip.addEventListener("click", () => {
+      if (onboardOverlay) onboardOverlay.style.display = "none";
+    });
+  }
+
   // --- Initialization Lifecycle ---
   document.addEventListener("DOMContentLoaded", () => {
     loadBills();
+    defaultBillingMonth();
+    if (!getHouseholdSize() && onboardOverlay) onboardOverlay.style.display = "flex";
     renderAll();
     if (typeof window.updateQualityUI === "function") {
       window.updateQualityUI();
@@ -1810,6 +1952,7 @@
     if (!isTdsOk) {
       findings.push({
         type: "tds",
+        short: "High minerals",
         title: `Elevated TDS Level (${data.tds} mg/L)`,
         issue: `Exceeds the EPA secondary drinking water aesthetic guideline of 500 mg/L. May cause mineral scaling, salty/bitter taste, and fixture deposits.`,
         fix: "Install an under-sink reverse osmosis system for dedicated drinking and cooking lines to remove total dissolved mineral salts.",
@@ -1826,6 +1969,7 @@
         : "pH above 8.5 decreases chlorine disinfection effectiveness and contributes to mineral encrustation.";
       findings.push({
         type: "ph",
+        short: "pH out of range",
         title: `${problem}: pH ${data.ph.toFixed(1)}`,
         issue: `${detail} Standard EPA secondary benchmark is 6.5-8.5.`,
         fix: "Perform a secondary laboratory-grade test with multi-parameter strips to rule out localized plumbing corrosion before installing a neutralizing filter.",
@@ -1838,6 +1982,7 @@
     if (!isChlorineOk) {
       findings.push({
         type: "chlorine",
+        short: "High chlorine",
         title: `High Free Chlorine (${data.chlorine.toFixed(1)} mg/L)`,
         issue: `Meets or exceeds the EPA enforceable maximum residual disinfectant limit of 4.0 mg/L. Causes strong bleach odors, skin irritation, and eye drying.`,
         fix: "Utilize an activated carbon drinking water filter pitcher or point-of-use inline carbon block filter to absorb free chlorine residuals.",
@@ -1867,6 +2012,7 @@
     if (!isHardnessOk) {
       findings.push({
         type: "hardness",
+        short: "Hard water",
         title: `${hardnessLabel} Water (${data.hardness} mg/L CaCO3)`,
         issue: `Hardness exceeds 120 mg/L. Forms tough limescale deposits inside water heaters, dishwasher elements, and shower fixtures while degrading soap lather.`,
         fix: "Install a whole-home salt-based ion-exchange water softener to capture calcium and magnesium before water enters the plumbing loop.",
@@ -1890,6 +2036,8 @@
 
     // Default Empty State
     if (!data) {
+      const verdictEl0 = document.getElementById("quality-verdict");
+      if (verdictEl0) verdictEl0.style.display = "none";
       if (statusTds) statusTds.innerHTML = `<span class="badge badge-neutral">Pending</span>`;
       if (statusPh) statusPh.innerHTML = `<span class="badge badge-neutral">Pending</span>`;
       if (statusChlorine) statusChlorine.innerHTML = `<span class="badge badge-neutral">Pending</span>`;
@@ -1911,6 +2059,20 @@
 
     const evaluation = evaluateMetrics(data);
     const demoTag = data.isDemo ? ` <span class="badge badge-demo" style="font-size:0.65rem;">Demo</span>` : "";
+
+    // 0. Plain-language verdict banner
+    const verdictEl = document.getElementById("quality-verdict");
+    if (verdictEl) {
+      verdictEl.style.display = "flex";
+      if (evaluation.findings.length === 0) {
+        verdictEl.className = "verdict verdict-good";
+        verdictEl.innerHTML = `<span>&#10003;</span><span>Water Looks Great — all four readings are within EPA guidelines.</span>`;
+      } else {
+        verdictEl.className = "verdict verdict-bad";
+        const shorts = evaluation.findings.map(f => f.short).join(" · ");
+        verdictEl.innerHTML = `<span>&#9888;</span><span>${shorts}</span>`;
+      }
+    }
 
     // 1. Status Badges
     if (statusTds) {
@@ -2021,18 +2183,7 @@
       inputPh.value = chosen.ph;
       inputChlorine.value = chosen.chlorine;
       inputHardness.value = chosen.hardness;
-
-      const demoData = {
-        tds: chosen.tds,
-        ph: chosen.ph,
-        chlorine: chosen.chlorine,
-        hardness: chosen.hardness,
-        isDemo: true,
-        timestamp: Date.now()
-      };
-
-      saveQualityData(demoData);
-      updateQualityUI();
+      // Inputs are filled above — the user taps "Check My Water" to evaluate.
     });
   }
 
