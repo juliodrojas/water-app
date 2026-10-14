@@ -6,26 +6,26 @@
   <title>Water App (Beta)</title>
   <style>
     :root {
-      --primary: #0284c7;
-      --primary-dark: #0369a1;
-      --primary-light: #e0f2fe;
-      --accent: #0ea5e9;
-      --bg: #f0f9ff;
+      --primary: #3d8ab5;
+      --primary-dark: #2c6e94;
+      --primary-light: #e9f3f9;
+      --accent: #6fb3d6;
+      --bg: #f7fafc;
       --surface: #ffffff;
-      --surface-subtle: #f8fafc;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --border: #cbd5e1;
-      --success: #10b981;
-      --success-light: #ecfdf5;
-      --warning: #f59e0b;
-      --warning-light: #fffbeb;
-      --danger: #ef4444;
-      --danger-light: #fef2f2;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-      --radius: 16px;
-      --radius-sm: 8px;
+      --surface-subtle: #fbfdff;
+      --text: #22303c;
+      --text-muted: #93a3b1;
+      --border: #e6edf2;
+      --success: #4caf8e;
+      --success-light: #eaf7f1;
+      --warning: #d9a441;
+      --warning-light: #fdf6e9;
+      --danger: #d97373;
+      --danger-light: #fbeeee;
+      --shadow-sm: 0 1px 2px 0 rgba(35, 60, 80, 0.04);
+      --shadow: 0 8px 24px -8px rgba(35, 60, 80, 0.10);
+      --radius: 20px;
+      --radius-sm: 12px;
     }
 
     * {
@@ -46,13 +46,16 @@
 
     /* App Header */
     header.app-header {
-      background: linear-gradient(135deg, #0284c7, #0369a1);
-      color: #ffffff;
-      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.85);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      color: var(--text);
+      padding: 14px 20px;
       position: sticky;
       top: 0;
       z-index: 40;
-      box-shadow: var(--shadow);
+      box-shadow: none;
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -65,26 +68,28 @@
     }
 
     .brand-icon {
-      width: 28px;
-      height: 28px;
-      fill: #ffffff;
+      width: 24px;
+      height: 24px;
+      fill: var(--primary);
     }
 
     .brand-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-size: 1.15rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--text-muted);
     }
 
     .badge-beta {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: var(--primary-light);
+      border: none;
+      color: var(--primary-dark);
       padding: 2px 8px;
       border-radius: 9999px;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
     }
 
     /* Layout & Tabs */
@@ -113,15 +118,15 @@
     .card {
       background: var(--surface);
       border-radius: var(--radius);
-      padding: 18px;
-      margin-bottom: 16px;
+      padding: 22px;
+      margin-bottom: 18px;
       box-shadow: var(--shadow);
-      border: 1px solid rgba(226, 232, 240, 0.8);
+      border: 1px solid var(--border);
     }
 
     .card-title {
       font-size: 1.05rem;
-      font-weight: 700;
+      font-weight: 600;
       margin-bottom: 12px;
       color: var(--text);
       display: flex;
@@ -165,9 +170,10 @@
     }
 
     .stat-value {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--primary-dark);
+      font-size: 1.9rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--text);
     }
 
     .stat-sub {
@@ -258,7 +264,7 @@
       width: 100%;
       padding: 12px 16px;
       font-size: 0.95rem;
-      font-weight: 600;
+      font-weight: 500;
       border-radius: var(--radius-sm);
       border: none;
       cursor: pointer;
@@ -581,13 +587,15 @@
       left: 0;
       right: 0;
       height: 64px;
-      background: var(--surface);
-      border-top: 1px solid #e2e8f0;
+      background: rgba(255, 255, 255, 0.92);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 50;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      box-shadow: none;
     }
 
     .nav-btn {
@@ -619,7 +627,7 @@
 
     .nav-btn.active {
       color: var(--primary);
-      font-weight: 700;
+      font-weight: 600;
     }
 
     .nav-btn.active svg {
@@ -661,9 +669,9 @@
 
     /* Settings gear + panel */
     .gear-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      color: #ffffff;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
       border-radius: 9999px;
       width: 36px;
       height: 36px;
@@ -1439,7 +1447,7 @@
     });
   }
 
-  // --- SVG Chart Component ---
+  // --- SVG Chart Component (thin area-line, Pure Aqua style) ---
   function renderSvgChart(data) {
     if (!dashBarChart) return;
     dashBarChart.innerHTML = "";
@@ -1448,9 +1456,9 @@
 
     const width = 320;
     const height = 180;
-    const padLeft = 40;
-    const padRight = 10;
-    const padTop = 24;
+    const padLeft = 36;
+    const padRight = 8;
+    const padTop = 16;
     const padBottom = 26;
 
     const chartWidth = width - padLeft - padRight;
@@ -1460,75 +1468,98 @@
     const roundedMax = Math.ceil(maxGallons / 1000) * 1000;
 
     const ns = "http://www.w3.org/2000/svg";
+    const xFor = (i) => padLeft + (data.length === 1 ? chartWidth / 2 : (i / (data.length - 1)) * chartWidth);
+    const yFor = (g) => padTop + chartHeight - (g / roundedMax) * chartHeight;
 
-    // Grid baseline and mid reference lines
-    const gridLevels = [0, roundedMax / 2, roundedMax];
-    gridLevels.forEach(val => {
-      const y = padTop + chartHeight - (val / roundedMax) * chartHeight;
-
+    // Soft horizontal gridlines
+    [0, roundedMax / 2, roundedMax].forEach(val => {
+      const y = yFor(val);
       const line = document.createElementNS(ns, "line");
       line.setAttribute("x1", padLeft);
       line.setAttribute("y1", y);
       line.setAttribute("x2", width - padRight);
       line.setAttribute("y2", y);
-      line.setAttribute("stroke", "#e2e8f0");
+      line.setAttribute("stroke", "#e9eff4");
       line.setAttribute("stroke-width", "1");
-      line.setAttribute("stroke-dasharray", val > 0 ? "3,3" : "none");
       dashBarChart.appendChild(line);
 
       const label = document.createElementNS(ns, "text");
       label.setAttribute("x", padLeft - 6);
       label.setAttribute("y", y + 3);
-      label.setAttribute("fill", "#94a3b8");
+      label.setAttribute("fill", "#a7b6c2");
       label.setAttribute("font-size", "9");
       label.setAttribute("text-anchor", "end");
       label.textContent = val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val;
       dashBarChart.appendChild(label);
     });
 
-    const count = data.length;
-    const barWidth = Math.min(36, Math.max(16, (chartWidth / count) * 0.6));
-    const step = chartWidth / count;
+    // Smooth path through the points
+    const pts = data.map((d, i) => [xFor(i), yFor(d.gallons)]);
+    let dAttr = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1];
+      const [x1, y1] = pts[i];
+      const cx = (x0 + x1) / 2;
+      dAttr += ` C ${cx.toFixed(1)} ${y0.toFixed(1)}, ${cx.toFixed(1)} ${y1.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    }
 
+    // Gradient fill under the line
+    const defs = document.createElementNS(ns, "defs");
+    const grad = document.createElementNS(ns, "linearGradient");
+    grad.setAttribute("id", "aquaArea");
+    grad.setAttribute("x1", "0");
+    grad.setAttribute("y1", "0");
+    grad.setAttribute("x2", "0");
+    grad.setAttribute("y2", "1");
+    const stop1 = document.createElementNS(ns, "stop");
+    stop1.setAttribute("offset", "0");
+    stop1.setAttribute("stop-color", "#3d8ab5");
+    stop1.setAttribute("stop-opacity", "0.22");
+    const stop2 = document.createElementNS(ns, "stop");
+    stop2.setAttribute("offset", "1");
+    stop2.setAttribute("stop-color", "#3d8ab5");
+    stop2.setAttribute("stop-opacity", "0.02");
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+    dashBarChart.appendChild(defs);
+
+    const baseY = yFor(0).toFixed(1);
+    const area = document.createElementNS(ns, "path");
+    area.setAttribute("d", `${dAttr} L ${pts[pts.length - 1][0].toFixed(1)} ${baseY} L ${pts[0][0].toFixed(1)} ${baseY} Z`);
+    area.setAttribute("fill", "url(#aquaArea)");
+    dashBarChart.appendChild(area);
+
+    // The thin line itself
+    const line = document.createElementNS(ns, "path");
+    line.setAttribute("d", dAttr);
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", "#3d8ab5");
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("stroke-linecap", "round");
+    dashBarChart.appendChild(line);
+
+    // Dots + month labels
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     data.forEach((item, idx) => {
-      const barHeight = Math.max(2, (item.gallons / roundedMax) * chartHeight);
-      const x = padLeft + idx * step + (step - barWidth) / 2;
-      const y = padTop + chartHeight - barHeight;
+      const [x, y] = pts[idx];
+      const dot = document.createElementNS(ns, "circle");
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute("cy", y.toFixed(1));
+      dot.setAttribute("r", "3");
+      dot.setAttribute("fill", "#ffffff");
+      dot.setAttribute("stroke", "#3d8ab5");
+      dot.setAttribute("stroke-width", "2");
+      dashBarChart.appendChild(dot);
 
-      // Bar rect
-      const rect = document.createElementNS(ns, "rect");
-      rect.setAttribute("x", x);
-      rect.setAttribute("y", y);
-      rect.setAttribute("width", barWidth);
-      rect.setAttribute("height", barHeight);
-      rect.setAttribute("rx", "4");
-      rect.setAttribute("fill", idx === count - 1 ? "#0284c7" : "#38bdf8");
-      dashBarChart.appendChild(rect);
-
-      // Value label above each bar
-      const valLabel = document.createElementNS(ns, "text");
-      valLabel.setAttribute("x", x + barWidth / 2);
-      valLabel.setAttribute("y", y - 4);
-      valLabel.setAttribute("fill", "#0369a1");
-      valLabel.setAttribute("font-size", "8.5");
-      valLabel.setAttribute("font-weight", "600");
-      valLabel.setAttribute("text-anchor", "middle");
-      valLabel.textContent = `${(item.gallons / 1000).toFixed(1)}k`;
-      dashBarChart.appendChild(valLabel);
-
-      // Month label below each bar
       const xLabel = document.createElementNS(ns, "text");
-      xLabel.setAttribute("x", x + barWidth / 2);
+      xLabel.setAttribute("x", x.toFixed(1));
       xLabel.setAttribute("y", height - 8);
-      xLabel.setAttribute("fill", "#64748b");
+      xLabel.setAttribute("fill", "#a7b6c2");
       xLabel.setAttribute("font-size", "9");
       xLabel.setAttribute("text-anchor", "middle");
-
-      const parts = item.month.split("-");
-      const mo = parts[1];
-      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      const shortMonth = mo ? monthNames[parseInt(mo, 10) - 1] || mo : item.month;
-      xLabel.textContent = shortMonth;
+      const mo = item.month.split("-")[1];
+      xLabel.textContent = mo ? monthNames[parseInt(mo, 10) - 1] || mo : item.month;
       dashBarChart.appendChild(xLabel);
     });
   }
