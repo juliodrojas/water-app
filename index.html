@@ -295,6 +295,42 @@
       color: var(--text);
     }
 
+    .scan-status {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 4px 0 8px;
+    }
+
+    .scan-progress {
+      height: 6px;
+      background: var(--primary-light);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .scan-progress > div {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.2s;
+      border-radius: 9999px;
+    }
+
+    .scan-result-box {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+    }
+
+    .scan-found-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      margin: 0 0 12px;
+    }
+
     .btn-outline-danger {
       background: transparent;
       border: 1px solid var(--danger);
@@ -871,6 +907,25 @@
         <h2 class="card-title">Log Water Bill</h2>
         <p class="card-subtitle">Type in the numbers from your water bill.</p>
 
+        <button type="button" class="btn btn-outline" id="btn-scan-bill" style="margin-bottom: 12px;">📷 Scan My Bill</button>
+        <input type="file" id="scan-file-input" accept="image/*" style="display: none;">
+        <div id="scan-panel" style="display: none; margin-bottom: 12px;">
+          <div id="scan-status" class="scan-status"></div>
+          <div id="scan-result" class="scan-result-box" style="display: none;">
+            <p class="scan-found-title">Here's what I found — fix anything that looks off:</p>
+            <div class="form-group">
+              <label class="form-label" for="scan-gallons">Gallons</label>
+              <input type="number" step="any" min="0" id="scan-gallons" class="form-input" placeholder="e.g. 4500">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="scan-cost">Bill Amount ($)</label>
+              <input type="number" step="0.01" min="0" id="scan-cost" class="form-input" placeholder="e.g. 52.40">
+            </div>
+            <button type="button" class="btn btn-primary" id="btn-use-scan">Use These Numbers</button>
+            <button type="button" class="btn btn-outline" id="btn-scan-again" style="margin-top: 8px;">Try Another Photo</button>
+          </div>
+        </div>
+
         <form id="usage-log-form">
           <input type="hidden" id="entry-id" value="">
 
@@ -1445,6 +1500,174 @@
       resetForm();
       renderAll();
     });
+  }
+
+  // --- Bill Photo Scan (OCR via Tesseract.js, loaded on demand) ---
+  const btnScanBill = document.getElementById("btn-scan-bill");
+  const scanFileInput = document.getElementById("scan-file-input");
+  const scanPanel = document.getElementById("scan-panel");
+  const scanStatus = document.getElementById("scan-status");
+  const scanResult = document.getElementById("scan-result");
+  const scanGallonsInput = document.getElementById("scan-gallons");
+  const scanCostInput = document.getElementById("scan-cost");
+  const btnUseScan = document.getElementById("btn-use-scan");
+  const btnScanAgain = document.getElementById("btn-scan-again");
+  let tesseractPromise = null;
+
+  function ensureTesseract() {
+    if (window.Tesseract) return Promise.resolve();
+    if (tesseractPromise) return tesseractPromise;
+    tesseractPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("Couldn't load the text reader — check your connection and try again."));
+      document.head.appendChild(s);
+    });
+    return tesseractPromise;
+  }
+
+  function downscaleForOcr(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const maxDim = 1600;
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Couldn't read that photo — try a different one."));
+      };
+      img.src = url;
+    });
+  }
+
+  function parseBillText(rawText) {
+    const t = String(rawText || "").replace(/\s+/g, " ");
+    let gallons = null;
+
+    const volPatterns = [
+      /([\d,]+(?:\.\d+)?)\s*(?:gallons|gal)\b/i,
+      /consumption\s*[:\-]?\s*([\d,]+(?:\.\d+)?)/i,
+      /water\s+used\s*[:\-]?\s*([\d,]+(?:\.\d+)?)/i,
+      /\busage\s*[:\-]?\s*([\d,]+(?:\.\d+)?)/i
+    ];
+    for (const p of volPatterns) {
+      const m = t.match(p);
+      if (m) {
+        gallons = parseFloat(m[1].replace(/,/g, ""));
+        break;
+      }
+    }
+    if (gallons === null) {
+      const m = t.match(/([\d,]+(?:\.\d+)?)\s*ccf\b/i);
+      if (m) gallons = parseFloat(m[1].replace(/,/g, "")) * CCF_TO_GAL;
+    }
+
+    let cost = null;
+    const moneyRe = /\$?\s*(\d{1,3}(?:,\d{3})*\.\d{2})/g;
+    const amounts = [];
+    let m;
+    while ((m = moneyRe.exec(t)) !== null) {
+      amounts.push({ v: parseFloat(m[1].replace(/,/g, "")), i: m.index });
+    }
+    if (amounts.length > 0) {
+      const kw = t.search(/total|amount due|balance|current charges|please pay|amount owed/i);
+      if (kw !== -1) {
+        amounts.sort((a, b) => Math.abs(a.i - kw) - Math.abs(b.i - kw));
+        cost = amounts[0].v;
+      } else {
+        cost = Math.max(...amounts.map(a => a.v));
+      }
+    }
+
+    return {
+      gallons: gallons !== null && !isNaN(gallons) ? Math.round(gallons) : null,
+      cost: cost !== null && !isNaN(cost) ? Math.round(cost * 100) / 100 : null
+    };
+  }
+
+  function setScanStatus(html) {
+    scanStatus.innerHTML = html;
+  }
+
+  if (btnScanBill && scanFileInput) {
+    btnScanBill.addEventListener("click", () => scanFileInput.click());
+
+    scanFileInput.addEventListener("change", async () => {
+      const file = scanFileInput.files && scanFileInput.files[0];
+      scanFileInput.value = "";
+      if (!file) return;
+
+      scanPanel.style.display = "block";
+      scanResult.style.display = "none";
+      setScanStatus('<span id="scan-msg">Loading text reader…</span><div class="scan-progress"><div id="scan-bar"></div></div>');
+
+      try {
+        await ensureTesseract();
+        const msgEl = document.getElementById("scan-msg");
+        const barEl = document.getElementById("scan-bar");
+        if (msgEl) msgEl.textContent = "Reading your bill… 0%";
+
+        const canvas = await downscaleForOcr(file);
+        const worker = await Tesseract.createWorker("eng", 1, {
+          logger: (log) => {
+            if (log && log.status === "recognizing text") {
+              const pct = Math.round((log.progress || 0) * 100);
+              if (msgEl) msgEl.textContent = `Reading your bill… ${pct}%`;
+              if (barEl) barEl.style.width = pct + "%";
+            }
+          }
+        });
+        const { data: { text } } = await worker.recognize(canvas);
+        await worker.terminate();
+
+        const found = parseBillText(text);
+        if (found.gallons === null && found.cost === null) {
+          setScanStatus("Couldn't pull numbers from that photo — try a clearer, well-lit shot of the bill, or type the numbers in below.");
+          return;
+        }
+        if (scanGallonsInput) scanGallonsInput.value = found.gallons !== null ? found.gallons : "";
+        if (scanCostInput) scanCostInput.value = found.cost !== null ? found.cost.toFixed(2) : "";
+        setScanStatus("Here's what I found — fix anything that looks off, then tap <strong>Use These Numbers</strong>.");
+        scanResult.style.display = "block";
+      } catch (err) {
+        setScanStatus((err && err.message) || "Something went wrong reading the photo — you can still type the numbers in below.");
+      }
+    });
+
+    if (btnScanAgain) {
+      btnScanAgain.addEventListener("click", () => {
+        scanResult.style.display = "none";
+        scanFileInput.click();
+      });
+    }
+
+    if (btnUseScan) {
+      btnUseScan.addEventListener("click", () => {
+        const g = parseFloat(scanGallonsInput.value);
+        const c = parseFloat(scanCostInput.value);
+        if (!isNaN(g) && g >= 0 && entryUsageInput) {
+          setUnit("gal");
+          entryUsageInput.value = Math.round(g);
+        }
+        if (!isNaN(c) && c >= 0 && entryCostInput) {
+          entryCostInput.value = c.toFixed(2);
+        }
+        scanPanel.style.display = "none";
+        scanResult.style.display = "none";
+        if (entryUsageInput) entryUsageInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
   }
 
   // --- SVG Chart Component (thin area-line, Pure Aqua style) ---
